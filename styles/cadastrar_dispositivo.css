@@ -1,0 +1,68 @@
+* {
+    overflow: hidden;
+}
+
+.container_cadDispositivo {
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+}
+
+label {
+  font-weight: bold;
+  color: #555;
+  margin-right: 5px;
+}
+
+.form_cad_dispositivo {
+    display: block;
+    text-align: center;
+}
+
+.btn_edit, .btn_delete, .btn_save {
+    margin: 10px;
+    padding: 5px 10px;
+    background-color: #4CAF50;
+    color: #fff;
+}
+
+.btn_edit:hover, .btn_delete:hover, .btn_save {
+    background-color: #3e8e41;
+}
+
+.form_dispositivo {
+    width: 40%;
+    margin: auto;
+}
+
+.logo img {
+    width: 25%;
+}
+
+.logo {
+    text-align: center;
+}
+
+.title_dispositivo {
+    color: white;
+    margin: 1rem;
+}
+
+.btn_cadastro {
+    border: 1px;
+    border-radius: 10px;
+    padding: .5rem 1rem;
+    margin: 1rem;
+    background-color: rgb(3, 177, 3);
+    color: white;
+    text-decoration: none;
+    font-size: 1.2rem;
+    transition: .3s;
+}
+
+.btn_cadastro:hover {
+    background-color: green;
+    color: black;
+    transition: .3s;
+}

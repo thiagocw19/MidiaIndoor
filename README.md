@@ -1,2 +1,3 @@
-# MidiaIndoor
-Um site para gerenciar mídias Indoor
+# NexusView
+Projeto intesciplinar de tecnologia da informação (PI4)
+sdsfdghhj
