@@ -68,55 +68,49 @@
         const CHECK_INTERVAL = 5000;
         let isMuted = true;
 
-        function initDB() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open("PresentationDB", 1);
-                request.onupgradeneeded = (event) => {
-                    const db = event.target.result;
-                    db.createObjectStore("slides", { keyPath: "id" });
-                };
-                request.onsuccess = () => {
-                    resolve(request.result);
-                };
-                request.onerror = () => {
-                    reject("Erro ao abrir o banco de dados");
-                };
+        // Função para gerar uma chave única de cache com base no playlistId
+        function getCacheKey(playlistId) {
+            return `slides-cache-${playlistId}`;
+        }
+
+        // Função para verificar se o cache contém os dados esperados
+        async function checkCache(playlistId) {
+            const cacheKey = getCacheKey(playlistId);
+            const cache = await caches.open(cacheKey);
+            const cacheEntries = await cache.keys();
+            return cacheEntries.length > 0;  // Verifica se há entradas no cache
+        }
+
+        // Função para armazenar slides no Cache
+        function storeSlidesInCache(slides, playlistId) {
+            const cacheKey = getCacheKey(playlistId);
+            return caches.open(cacheKey).then(cache => {
+                const cacheData = new Response(JSON.stringify(slides), {
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                return cache.put('/slides', cacheData);
             });
         }
 
-        function storeSlides(db, slides) {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction("slides", "readwrite");
-                const store = transaction.objectStore("slides");
-                const clearRequest = store.clear();
-                clearRequest.onsuccess = () => {
-                    slides.forEach(slide => {
-                        store.put(slide);
-                    });
-                    transaction.oncomplete = () => {
-                        resolve();
-                    };
-                };
-                clearRequest.onerror = () => {
-                    reject("Erro ao limpar slides antigos");
-                };
+        // Função para carregar as imagens e vídeos no cache
+        function cacheMediaFiles(slides, playlistId) {
+            const mediaUrls = slides.flatMap(item => {
+                let urls = [];
+                if (item.tipo.startsWith('image/')) {
+                    urls.push(`https://140.238.176.86/API/visualizar_imagem.php?id=${item.id}`);
+                } else if (item.tipo.startsWith('video/')) {
+                    urls.push(`https://140.238.176.86/API/visualizar_video.php?id=${item.id}`);
+                }
+                return urls;
+            });
+
+            const cacheKey = getCacheKey(playlistId);
+            return caches.open(cacheKey).then(cache => {
+                return Promise.all(mediaUrls.map(url => cache.add(url)));
             });
         }
 
-        function fetchSlides(db) {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction("slides", "readonly");
-                const store = transaction.objectStore("slides");
-                const request = store.getAll();
-                request.onsuccess = () => {
-                    resolve(request.result);
-                };
-                request.onerror = () => {
-                    reject("Erro ao buscar slides");
-                };
-            });
-        }
-
+        // Função para iniciar a apresentação dos slides
         function startPresentation(slides) {
             let currentSlide = 0;
 
@@ -145,70 +139,91 @@
             setInterval(showSlide, 4000);
         }
 
+        // Função para carregar os slides e iniciar a apresentação imediatamente
         function loadSlides(playlistId, dispositivoId) {
             const loadingDiv = document.getElementById('loading');
             const container = document.getElementById('apresentacao');
 
             loadingDiv.style.display = 'block';
 
-            initDB().then(db => {
-                return fetch(`https://140.238.176.86/API/iniciar_apresentacao.php?playlist_id=${playlistId}&dispositivo_id=${dispositivoId}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Rede não está ok');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        return storeSlides(db, data).then(() => data);
-                    });
-            }).then(slides => {
-                loadingDiv.style.display = 'none';
+            fetch(`/API/iniciar_apresentacao.php?playlist_id=${playlistId}&dispositivo_id=${dispositivoId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Rede não está ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    return storeSlidesInCache(data, playlistId).then(() => data);
+                })
+                .then(slides => {
+                    loadingDiv.style.display = 'none';
+                    container.innerHTML = '';
 
-                container.innerHTML = '';
-
-                if (slides.length === 0) {
-                    console.error('Nenhum slide encontrado para a playlist e dispositivo selecionados.');
-                    return;
-                }
-
-                slides.forEach(item => {
-                    const slide = document.createElement('div');
-                    slide.className = 'slide';
-
-                    let content = '';
-                    if (item.tipo.startsWith('image/')) {
-                        content = `<img src="https://140.238.176.86/API/visualizar_imagem.php?id=${item.id}" alt="${item.nome}" style="width:100%; height:auto;">`;
-                    } else if (item.tipo.startsWith('video/')) {
-                        content = `<video controls muted style="width:100%; height:auto;">
-                                      <source src="https://140.238.176.86/API/visualizar_video.php?id=${item.id}" type="${item.tipo}">
-                                   </video>`;
-                    } else if (item.tipo === 'text/plain' || item.tipo === 'text/html') {
-                        content = `<iframe src="https://140.238.176.86/API/visualizar_texto.php?id=${item.id}" style="width:100%; height:100%; border:none;"></iframe>`;
+                    if (slides.length === 0) {
+                        console.error('Nenhum slide encontrado para a playlist e dispositivo selecionados.');
+                        return;
                     }
 
-                    slide.innerHTML = content;
-                    container.appendChild(slide);
-                });
+                    slides.forEach(item => {
+                        const slide = document.createElement('div');
+                        slide.className = 'slide';
 
-                const slidesElements = document.querySelectorAll('.slide');
-                if (slidesElements.length > 0) {
-                    startPresentation(slidesElements);
-                    currentSlides = slidesElements;
-                    lastPlaylistId = playlistId;
-                    lastSlidesHash = JSON.stringify(slides);
-                } else {
-                    console.error('Nenhum slide carregado.');
-                }
-            }).catch(error => {
-                loadingDiv.style.display = 'none';
-                console.error('Erro ao carregar slides:', error);
-            });
+                        let content = '';
+                        if (item.tipo.startsWith('image/')) {
+                            content = `<img src="https://140.238.176.86/API/visualizar_imagem.php?id=${item.id}" alt="${item.nome}" style="width:100%; height:auto;">`;
+                        } else if (item.tipo.startsWith('video/')) {
+                            content = `<video controls muted style="width:100%; height:auto;">
+                                          <source src="https://140.238.176.86/API/visualizar_video.php?id=${item.id}" type="${item.tipo}">
+                                       </video>`;
+                        } else if (item.tipo === 'text/plain' || item.tipo === 'text/html') {
+                            content = `<iframe src="https://140.238.176.86/API/visualizar_texto.php?id=${item.id}" style="width:100%; height:100%; border:none;"></iframe>`;
+                        }
+
+                        slide.innerHTML = content;
+                        container.appendChild(slide);
+                    });
+
+                    const slidesElements = document.querySelectorAll('.slide');
+                    if (slidesElements.length > 0) {
+                        startPresentation(slidesElements);
+
+                        cacheMediaFiles(slides, playlistId).catch(error => {
+                            console.error('Erro ao armazenar arquivos no cache:', error);
+                        });
+
+                        currentSlides = slidesElements;
+                        lastPlaylistId = playlistId;
+                        lastSlidesHash = JSON.stringify(slides);
+                    } else {
+                        console.error('Nenhum slide carregado.');
+                    }
+                })
+                .catch(error => {
+                    loadingDiv.style.display = 'none';
+                    console.error('Erro ao carregar slides:', error);
+                    fetchSlidesFromCache(playlistId).then(slides => {
+                        if (slides && slides.length > 0) {
+                            console.log('Carregando slides do cache...');
+                            slides.forEach(item => {
+                                const slide = document.createElement('div');
+                                slide.className = 'slide';
+                                slide.innerHTML = `<img src="https://140.238.176.86/API/visualizar_imagem.php?id=${item.id}" alt="${item.nome}" style="width:100%; height:auto;">`;
+                                container.appendChild(slide);
+                            });
+                            const slidesElements = document.querySelectorAll('.slide');
+                            startPresentation(slidesElements);
+                        } else {
+                            console.error('Nenhum slide encontrado no cache.');
+                        }
+                    });
+                });
         }
 
+        // Função para verificar atualizações
         function checkForUpdates(playlistId, dispositivoId) {
             setInterval(() => {
-                fetch(`https://140.238.176.86/API/iniciar_apresentacao.php?playlist_id=${playlistId}&dispositivo_id=${dispositivoId}`)
+                fetch(`/API/iniciar_apresentacao.php?playlist_id=${playlistId}&dispositivo_id=${dispositivoId}`)
                     .then(response => {
                         if (!response.ok) {
                             throw new Error('Rede não está ok');
@@ -227,6 +242,21 @@
             }, CHECK_INTERVAL);
         }
 
+        // Função para verificar e parar a apresentação se o cache não existir
+        function checkCacheStatus(playlistId) {
+            checkCache(playlistId).then(exists => {
+                if (!exists) {
+                    console.log("Cache não encontrado, parando a apresentação.");
+                    stopPresentation();
+                    loadSlides(playlistId, dispositivoId);
+                }
+            });
+        }
+
+        function stopPresentation() {
+            currentSlides.forEach(slide => slide.classList.remove('active'));
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             const urlParams = new URLSearchParams(window.location.search);
             const playlistId = urlParams.get('playlist_id');
@@ -234,7 +264,7 @@
 
             loadSlides(playlistId, dispositivoId);
             checkForUpdates(playlistId, dispositivoId);
-            
+
             document.getElementById('soundToggle').addEventListener('click', function() {
                 isMuted = !isMuted;
                 this.textContent = isMuted ? 'Ativar Som' : 'Desativar Som';
@@ -245,6 +275,8 @@
                     }
                 });
             });
+
+            setInterval(() => checkCacheStatus(lastPlaylistId), 5000); // Verifica o cache a cada 5 segundos
         });
     </script>
 </body>

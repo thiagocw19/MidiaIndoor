@@ -30,7 +30,7 @@ document.getElementById('upload-form').addEventListener('submit', function (even
 
     loadingElement.style.display = 'block';
 
-    fetch('http://140.238.176.86/API/upload_arquivo.php', {
+    fetch('/www/wwwroot/140.238.176.86/API/upload_arquivo.php', {
         method: 'POST',
         body: formData
     })

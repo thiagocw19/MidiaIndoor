@@ -14,6 +14,19 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
   <style>
   
+    .excluir-link {
+        background-color: red;
+        padding: .3rem .6rem;
+        border: none;
+        border-radius: 10px;
+        color: white;
+        transition: .3s;
+    }
+
+    .excluir-link:hover{
+        background-color: rgb(150, 3, 3);
+    }
+  
     .btn-delete {
         background-color: red;
         padding: .3rem .6rem;
@@ -108,7 +121,7 @@
                 echo "<a href='/API/visualizar_imagem.php?id=$id_arquivo' target='_blank'><img src='/API/visualizar_imagem.php?id=$id_arquivo' alt='Imagem'></a>";
                 //echo "<p>$nome_arquivo</p>";
                 echo "</div>";
-                echo "<button class='excluir-link btn btn-danger' data-id='$id_arquivo'>Excluir</button>";
+                echo "<button class='excluir-link' data-id='$id_arquivo'>Excluir</button>";
               }
             } else {
               echo "<p>Sem imagens disponíveis.</p>";
@@ -143,7 +156,7 @@
                       </video>";
                 //echo "<p>$nome_arquivo</p>";
                 echo "</div>";
-                echo "<button class='excluir-link btn btn-danger' data-id='$id_arquivo'>Excluir</button>";
+                echo "<button class='excluir-link' data-id='$id_arquivo'>Excluir</button>";
               }
             } else {
               echo "<p>Sem vídeos disponíveis.</p>";
@@ -175,7 +188,7 @@
                 echo "<a href='visualizar_texto.php?id=$id_arquivo' target='_blank'>Ver arquivo de texto</a>";
                 //echo "<p>$nome_arquivo</p>";
                 echo "</div>";
-                echo "<button class='excluir-link btn btn-danger' data-id='$id_arquivo'>Excluir</button>";
+                echo "<button class='excluir-link' data-id='$id_arquivo'>Excluir</button>";
               }
             } else {
               echo "<p>Sem arquivos de texto disponíveis.</p>";
@@ -189,26 +202,13 @@
         <div class="files-section" id="playlists" style="display: none;"> <!-- Inicialmente escondido -->
             <div class="container">
                 <?php
-                $servername = "localhost";
-                $username = "nexusview";
-                $password = "AJezEewFKGRbSR7m";
-                $dbname = "nexusview";
-    
-                // Criar conexão
-                $conn = new mysqli($servername, $username, $password, $dbname);
-    
-                // Checar conexão
-                if ($conn->connect_error) {
-                    die("Falha na conexão: " . $conn->connect_error);
-                }
-    
                 // Selecionar playlists
                 $sql = "SELECT * FROM playlists";
                 $result = $conn->query($sql);
     
                 if ($result->num_rows > 0) {
                     while ($row = $result->fetch_assoc()) {
-                        echo "<div class='playlist'>";
+                        echo "<div class='playlist' id='playlist-" . intval($row["id"]) . "'>";
                         echo "<h2 style='color: white;'>" . htmlspecialchars($row["nome"]) . "</h2>";
                         echo "<p style='color: white;'>" . htmlspecialchars($row["descricao"]) . "</p>";
     
@@ -276,9 +276,10 @@
   </main>
 
   <script>
-    
+  
     function excluirArquivo(button, playlistId) {
     // Obter o ID do arquivo
+    event.preventDefault()
     var idArquivo = button.getAttribute('data-id');
     var arquivoDiv = button.parentElement; // Obter o elemento pai do botão
 
@@ -337,54 +338,67 @@
     document.getElementById('add_to_playlist').addEventListener('click', function() {
       const playlistId = document.getElementById('playlist').value;
       const selectedFiles = Array.from(document.querySelectorAll('input[name="arquivo_ids[]"]:checked')).map(checkbox => checkbox.value);
-
+    
       if (selectedFiles.length === 0) {
         alert('Selecione pelo menos um arquivo.');
         return;
       }
-
+    
       if (!playlistId) {
         alert('Selecione uma playlist.');
         return;
       }
-
+    
       fetch('/API/adicionar_playlist.php', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          body: 'playlist_id=' + encodeURIComponent(playlistId) + '&arquivo_ids=' + encodeURIComponent(JSON.stringify(selectedFiles))
-        })
-        .then(response => response.json())
-        .then(data => {
-          if(data.success)
-          {
-            Swal.fire({
-                title: 'Error!',
-                text: 'Algum erro ocorreu e não foi possível adicionar o arquivo!',
-                icon: 'error',
-                toast: true, // Exibe uma mensagem de sucesso como um toast
-                position: 'top-right', // Posição da mensagem
-                timer: 4000, // Fecha a mensagem após 2 segundos
-                showConfirmButton: false // Não exibe o botão "OK"
-                });
-          }
-          else
-          {
-              Swal.fire({
-                title: 'Sucesso!',
-                text: 'Arquivo adicionado!',
-                icon: 'success',
-                toast: true, // Exibe uma mensagem de sucesso como um toast
-                position: 'top-right', // Posição da mensagem
-                timer: 4000, // Fecha a mensagem após 2 segundos
-                showConfirmButton: false // Não exibe o botão "OK"
-                });
-          }
-        })
-        .catch(error => console.error('Erro:', error));
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: 'playlist_id=' + encodeURIComponent(playlistId) + '&arquivo_ids=' + encodeURIComponent(JSON.stringify(selectedFiles))
+      })
+      .then(response => response.json())
+      .then(data => {
+        if(data.success) {
+          // Atualizar a interface para mostrar os arquivos adicionados à playlist
+          selectedFiles.forEach(fileId => {
+            const newFileElement = createFileElement(fileId, playlistId); // Passando playlistId
+            const playlistSection = document.getElementById('playlist-' + playlistId); // Selecionando a playlist correta
+            const arquivosDiv = playlistSection.querySelector('.arquivos'); // Selecionando a div de arquivos
+            arquivosDiv.appendChild(newFileElement); // Adiciona o novo arquivo à seção
+          });
+    
+          Swal.fire({
+            title: 'Sucesso!',
+            text: 'Arquivo(s) adicionado(s) à playlist!',
+            icon: 'success',
+            toast: true,
+            position: 'top-right',
+            timer: 4000,
+            showConfirmButton: false
+          });
+        } else {
+          // Atualizar a interface para mostrar os arquivos adicionados à playlist
+          selectedFiles.forEach(fileId => {
+            const newFileElement = createFileElement(fileId, playlistId); // Passando playlistId
+            const playlistSection = document.getElementById('playlist-' + playlistId); // Selecionando a playlist correta
+            const arquivosDiv = playlistSection.querySelector('.arquivos'); // Selecionando a div de arquivos
+            arquivosDiv.appendChild(newFileElement); // Adiciona o novo arquivo à seção
+          });
+    
+          Swal.fire({
+            title: 'Sucesso!',
+            text: 'Arquivo(s) adicionado(s) à playlist!',
+            icon: 'success',
+            toast: true,
+            position: 'top-right',
+            timer: 4000,
+            showConfirmButton: false
+          });
+        }
+      })
+      .catch(error => console.error('Erro:', error));
     });
-
+    
     document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.excluir-link').forEach(function(link) {
     link.addEventListener('click', function(event) {
@@ -412,7 +426,9 @@
                 timer: 4000, // Fecha a mensagem após 4 segundos
                 showConfirmButton: false
               });
-              button.closest('.arquivo').remove();
+              if (item) {
+                item.remove();
+              }
             } else {
               Swal.fire({
                 title: 'Erro!',

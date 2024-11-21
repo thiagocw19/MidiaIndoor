@@ -73,11 +73,16 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
+            height: 100%;
         }
 
         h2 {
             text-align: center;
             margin-bottom: 20px;
+        }
+        
+        h3 {
+            margin-bottom: 10px;
         }
 
         form {
@@ -131,17 +136,34 @@
         }
 
         th {
-            background: #f2f2f2;
+            background: rgb(193, 193, 193);
         }
 
         tr:hover {
-            background: #f9f9f9;
+            background: rgb(190, 190, 190);
         }
 
         .action-buttons {
             display: flex;
             gap: 5px;
             /* Espaçamento entre os botões */
+        }
+        
+        .title_playlist {
+            color: white;
+            margin: 1rem;
+        }
+        
+        .btn-excluir {
+            background-color: red;
+        }
+        
+        .btn-excluir:hover {
+            background-color: rgb(150, 0, 0);
+        }
+        
+        .div_btn_voltar {
+            position: fixed;
         }
     </style>
 </head>
@@ -152,7 +174,7 @@
         <a href="./menu.html" class="btn_voltar">Voltar</a>
     </div>
 
-    <h2>Gerenciar Playlists e Dispositivos</h2>
+    <h2 class="title_playlist">Gerenciar Playlists e Dispositivos</h2>
 
     <form id="vincular-form" method="POST" action="" onsubmit="event.preventDefault(); verificarVinculo();" data-editing="false">
         <h3>Selecione o dispositivo e a playlist:</h3>
@@ -187,7 +209,7 @@
 
     <?php
     // Exibir as associações que têm playlist
-    echo "<h3>Dispositivos já vinculados a playlists:</h3>";
+    echo "<h3 class='title_playlist'>Dispositivos já vinculados a playlists:</h3>";
     echo "<table>";
     echo "<tr><th>Dispositivo</th><th>Playlist</th><th>Ação</th></tr>";
 
@@ -204,7 +226,7 @@
         echo "<td>" . $row['playlist_nome'] . "</td>";
         echo "<td class='action-buttons'>
                 <button onclick='carregarFormularioEdicao(" . $row['dispositivo_id'] . ", " . $row['playlist_id'] . ")'>Editar</button>
-                <button onclick='excluirVinculo(" . $row['dispositivo_id'] . ")'>Excluir</button>
+                <button onclick='excluirVinculo(" . $row['dispositivo_id'] . ")' class='btn-excluir'>Excluir</button>
               </td>";
         echo "</tr>";
     }

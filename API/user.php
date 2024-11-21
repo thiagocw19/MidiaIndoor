@@ -1,4 +1,5 @@
 <?php
+session_start(); // Inicia a sessão
 
 // Dados de acesso ao banco de dados
 $servername = "localhost";
@@ -22,6 +23,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $stmt->bind_param("sss", $username, $email, $password);
 
     if ($stmt->execute()) {
+        // Armazena o nome de usuário na sessão após o cadastro
+        $_SESSION['username'] = $username;
+
         echo json_encode(['success' => true, 'message' => 'Usuário cadastrado com sucesso!']);
     } else {
         echo json_encode(['success' => false, 'message' => 'Erro ao cadastrar usuário.']);

@@ -11,7 +11,6 @@
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script src="https://cdn.ckeditor.com/4.21.0/standard/ckeditor.js"></script>
-    <script src="/scripts/adicionar_arquivos.js" defer></script>
 </head>
 
 <body>
@@ -21,28 +20,24 @@
     <div class="container_addFiles">
         <div class="form_addFiles">
             <div class="logo">
-                <img src="/images/NexusViewpi4.png" alt="NexusViewPi4">
+                <img src="https://140.238.176.86/images/NexusViewpi4.png" alt="NexusViewPi4">
             </div>
             <h2 class="title_addFiles">Adicionar Arquivo ou Texto</h2>
 
-            <!-- Ajustado para incluir action e method POST -->
-            <form id="upload-form" class="form_addFile_input" enctype="multipart/form-data" action="/API/upload_arquivo.php" method="POST">
+            <form id="upload-form" class="form_addFile_input" enctype="multipart/form-data">
                 <select id="upload-type" class="form-select" name="upload_type" onchange="toggleInputs()" required>
                     <option value="file">Arquivo (Imagem/Vídeo)</option>
                     <option value="text">Texto</option>
                 </select>
 
-                <!-- Ajuste no ID do input de arquivo (removido o espaço no ID) -->
                 <div id="file-input" class="add_file my-3">
                     <input class="form-control" type="file" name="arquivo" accept="image/*,video/*">
                 </div>
 
-                <!-- CKEditor para edição de texto -->
                 <div id="text-input" class="add_text" style="display:none;">
                     <textarea name="texto" id="editor1"></textarea>
                 </div>
 
-                <!-- Botão estilizado -->
                 <button type="submit" class="btn_cadastro">Adicionar</button>
             </form>
         </div>
@@ -56,9 +51,31 @@
         <div id="success-message"></div>
     </div>
 
-    <!-- Script CKEditor -->
     <script>
         CKEDITOR.replace('editor1');
+
+        document.getElementById('upload-form').addEventListener('submit', function(event) {
+            event.preventDefault(); // Evita o envio padrão do formulário
+
+            const formData = new FormData(this); // Captura os dados do formulário
+
+            document.getElementById('loading').style.display = 'block'; // Mostra a mensagem de carregamento
+
+            fetch('https://140.238.176.86/API/upload_arquivo.php', {
+                method: 'POST',
+                body: formData // Envia os dados do formulário
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none'; // Esconde a mensagem de carregamento
+                document.getElementById('success-message').innerText = data.message; // Mostra a mensagem de sucesso
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                document.getElementById('loading').style.display = 'none'; // Esconde a mensagem de carregamento
+                document.getElementById('success-message').innerText = 'Erro ao enviar o arquivo.';
+            });
+        });
     </script>
 </body>
 

@@ -31,28 +31,54 @@
 
         #container {
             display: flex;
+            flex-direction: column;
+            align-items: center;
             width: 80%;
-            justify-content: space-between;
             flex-grow: 1;
             overflow: hidden;
-            position: relative;
         }
 
-        #itens_cardapio, #promocao_dia {
-            width: 48%;
+        #promocao_dia {
+            margin: 1em;
+            width: 100%;
             background-color: rgba(255, 255, 255, 0.9);
             padding: 10px;
-            border-radius: 10px;
+            border-radius: 30px;
+            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        #itens_cardapio {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: 30px;
             box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
             overflow: hidden;
         }
-        .riscado{
-            text-decoration: line-through;    /* Garante que o texto fica riscado */
-            text-decoration-color: red;       /* Altera a cor do traço para vermelho */
-            text-decoration-thickness: 2px;   /* Define a espessura do traço, se desejar */
+        #itens {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin: 1em;
+        }
+        #promocoes{
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin: 1em;
+        }
+
+        .section-cardapio {
+            margin-bottom: 20px;
         }
 
         .item-cardapio, .promocao-item {
+            width: 45%;
             display: flex;
             justify-content: space-between;
             padding: 5px 0;
@@ -82,25 +108,11 @@
             text-align: right;
         }
 
-        .item-cardapio.promocao {
-            text-decoration: line-through red;
-            color: #ccc;
+        /* Nova regra para o <s> */
+        s {
+            color: red;  /* Define a cor vermelha para o texto riscado */
         }
-
-        #promocao_dia {
-            margin-left: 20px;
-        }
-
-        .promocao-item {
-            animation: highlight 1s ease infinite alternate;
-        }
-
-        @keyframes highlight {
-            0% { background-color: rgba(255, 215, 0, 0.5); }
-            100% { background-color: rgba(255, 215, 0, 1); }
-        }
-
-        /* Ajuste do estilo do loader */
+        
         .loader {
             width: 80px;
             height: 80px;
@@ -123,10 +135,23 @@
                 #f6d353;
             background-size: 15px 15px, 6px 6px;
             animation: l4 3s infinite;
-            margin-top: 20px; /* Adiciona um espaçamento antes do loader */
-            display: block;
-            margin-left: auto;
-            margin-right: auto;
+            margin: 20px auto; /* Centraliza o loader */
+        }
+
+        .loading-message {
+            width: 100vw;
+            margin: auto;
+        }
+        
+        .div_promo {
+            padding: .3rem;
+            background-color: yellow;
+            border-bottom: 3px solid black;
+            border-radius: 10px;
+        }
+        
+        .div_geral {
+            border-radius: 30px;
         }
 
         @keyframes l4 {
@@ -138,46 +163,43 @@
             83.33% { -webkit-mask: conic-gradient(#0000 300deg,#000 0) }
             100%   { -webkit-mask: conic-gradient(#0000 360deg,#000 0) }
         }
-
-        .loading-message {
-            text-align: center;
-            color: black;
-            font-size: 1.5rem;
-            animation: fade 3s infinite;
-        }
-
-        @keyframes fade {
-            0%, 100% { opacity: 0; }
-            50% { opacity: 1; }
-        }
-       
+        
+        
+        
+        
     </style>
 </head>
 <body>
-    <h1>Cardápio</h1>
     <div id="container">
-        <div id="itens_cardapio">
-            <h2 style="text-align:center">Itens do Cardápio</h2>
-            <div class="loader" id="loader_cardapio"></div>
-            <div id="itens"></div>
+        <div id="promocao_dia">
+            <h2>Promoção do Dia</h2>
+            <div id="promocoes"></div>
+            <div class="loader" id="loader_promocao"></div>
+            
         </div>
 
-        <div id="promocao_dia">
-            <h2 style="text-align:center">Promoção do Dia</h2>
-            <div id="promocoes"></div>
-            <!-- O loader para a promoção ficará aqui abaixo -->
-            <div class="loader" id="loader_promocao"></div>
+        <div id="itens_cardapio">
+            <div class="section-cardapio">
+                <h2 style="text-align:center">Itens do Cardápio</h2>
+               
+                <div id="itens"></div>
+            </div>
         </div>
     </div>
 
     <script>
-        // Função para carregar os itens do cardápio
+        // Função para carregar os itens de cardápio
         function carregarCardapio() {
-            fetch('get_cardapio.php')
+            fetch('get_cardapio.php')  // Usando o mesmo arquivo PHP para ambos os blocos
                 .then(response => response.text())
                 .then(data => {
+                    // Carregar os itens no "Itens do Cardápio"
                     document.getElementById('itens').innerHTML = data;
-                    document.getElementById('loader_cardapio').style.display = 'none'; // Esconde o loader
+                    document.getElementById('loader_cardapio').style.display = 'none';
+
+                    // Carregar os itens também na "Itens do Cardápio 2"
+                    document.getElementById('conteudo_outra_area').innerHTML = data;
+                    document.getElementById('loader_outra_area').style.display = 'none';
                 })
                 .catch(error => {
                     console.error("Erro ao carregar cardápio:", error);
@@ -190,7 +212,7 @@
                 .then(response => response.text())
                 .then(data => {
                     document.getElementById('promocoes').innerHTML = data;
-                    document.getElementById('loader_promocao').style.display = 'none'; // Esconde o loader
+                    document.getElementById('loader_promocao').style.display = 'none';
                 })
                 .catch(error => {
                     console.error("Erro ao carregar promoções:", error);
@@ -199,10 +221,10 @@
 
         // Carregar os dados ao carregar a página
         window.onload = function() {
-            carregarCardapio();
-            carregarPromocoes();
-            
-            // Atualizar os itens e promoções a cada 3 segundos
+            carregarCardapio();  // Chama a função que carrega os itens de cardápio
+            carregarPromocoes();  // Chama a função que carrega as promoções
+
+            // Atualiza os itens e promoções a cada 3 segundos
             setInterval(() => {
                 carregarCardapio();
                 carregarPromocoes();

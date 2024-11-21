@@ -8,7 +8,7 @@ function carregarDispositivos() {
                 const dispositivoHTML = `
             <div class="dispositivo" data-id="${dispositivo.id}">
                 <label for="modelo">Modelo:</label>
-                <h2 class="dispositivo-modelo">${dispositivo.modelo}}</h2>
+                <h2 class="dispositivo-modelo">${dispositivo.modelo}</h2>
                 <input type="text" class="edit-modelo" value="${dispositivo.modelo}" style="display:none;">
                 <label for="resolucao">Resolução:</label>
                 <p class="dispositivo-resolucao">${dispositivo.resolucao}</p>
