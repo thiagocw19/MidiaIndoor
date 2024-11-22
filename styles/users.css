@@ -33,7 +33,7 @@
 }
 
 .btn_cadastro {
-    border: 1px;
+    border: 1px solid transparent; /* Adiciona uma borda sólida, você pode ajustar a cor se necessário */
     border-radius: 10px;
     padding: .5rem 1rem;
     background-color: rgb(3, 177, 3);

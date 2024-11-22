@@ -68,45 +68,49 @@
         const CHECK_INTERVAL = 5000;
         let isMuted = true;
 
-        // Função para gerar uma chave única de cache com base no playlistId
-        function getCacheKey(playlistId) {
-            return `slides-cache-${playlistId}`;
+        // Abrir banco de dados IndexedDB
+        function openDatabase() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('SlidesDB', 1);
+                request.onupgradeneeded = function(event) {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('slides')) {
+                        db.createObjectStore('slides', { keyPath: 'playlistId' });
+                    }
+                };
+                request.onsuccess = function(event) {
+                    resolve(event.target.result);
+                };
+                request.onerror = function(event) {
+                    reject(event.target.error);
+                };
+            });
         }
 
-        // Função para verificar se o cache contém os dados esperados
-        async function checkCache(playlistId) {
-            const cacheKey = getCacheKey(playlistId);
-            const cache = await caches.open(cacheKey);
-            const cacheEntries = await cache.keys();
-            return cacheEntries.length > 0;  // Verifica se há entradas no cache
+        // Armazenar slides no IndexedDB
+        function storeSlidesInDB(slides, playlistId) {
+            return openDatabase().then(db => {
+                const transaction = db.transaction('slides', 'readwrite');
+                const store = transaction.objectStore('slides');
+                store.put({ playlistId: playlistId, slides: slides });
+                return transaction.complete;
+            });
         }
 
-        // Função para armazenar slides no Cache
-        function storeSlidesInCache(slides, playlistId) {
-            const cacheKey = getCacheKey(playlistId);
-            return caches.open(cacheKey).then(cache => {
-                const cacheData = new Response(JSON.stringify(slides), {
-                    headers: { 'Content-Type': 'application/json' }
+        // Recuperar slides do IndexedDB
+        function getSlidesFromDB(playlistId) {
+            return openDatabase().then(db => {
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction('slides', 'readonly');
+                    const store = transaction.objectStore('slides');
+                    const request = store.get(playlistId);
+                    request.onsuccess = function() {
+                        resolve(request.result ? request.result.slides : null);
+                    };
+                    request.onerror = function() {
+                        reject('Erro ao recuperar slides do banco de dados.');
+                    };
                 });
-                return cache.put('/slides', cacheData);
-            });
-        }
-
-        // Função para carregar as imagens e vídeos no cache
-        function cacheMediaFiles(slides, playlistId) {
-            const mediaUrls = slides.flatMap(item => {
-                let urls = [];
-                if (item.tipo.startsWith('image/')) {
-                    urls.push(`https://140.238.176.86/API/visualizar_imagem.php?id=${item.id}`);
-                } else if (item.tipo.startsWith('video/')) {
-                    urls.push(`https://140.238.176.86/API/visualizar_video.php?id=${item.id}`);
-                }
-                return urls;
-            });
-
-            const cacheKey = getCacheKey(playlistId);
-            return caches.open(cacheKey).then(cache => {
-                return Promise.all(mediaUrls.map(url => cache.add(url)));
             });
         }
 
@@ -154,7 +158,7 @@
                     return response.json();
                 })
                 .then(data => {
-                    return storeSlidesInCache(data, playlistId).then(() => data);
+                    return storeSlidesInDB(data, playlistId).then(() => data);
                 })
                 .then(slides => {
                     loadingDiv.style.display = 'none';
@@ -187,11 +191,6 @@
                     const slidesElements = document.querySelectorAll('.slide');
                     if (slidesElements.length > 0) {
                         startPresentation(slidesElements);
-
-                        cacheMediaFiles(slides, playlistId).catch(error => {
-                            console.error('Erro ao armazenar arquivos no cache:', error);
-                        });
-
                         currentSlides = slidesElements;
                         lastPlaylistId = playlistId;
                         lastSlidesHash = JSON.stringify(slides);
@@ -202,9 +201,9 @@
                 .catch(error => {
                     loadingDiv.style.display = 'none';
                     console.error('Erro ao carregar slides:', error);
-                    fetchSlidesFromCache(playlistId).then(slides => {
+                    getSlidesFromDB(playlistId).then(slides => {
                         if (slides && slides.length > 0) {
-                            console.log('Carregando slides do cache...');
+                            console.log('Carregando slides do banco de dados...');
                             slides.forEach(item => {
                                 const slide = document.createElement('div');
                                 slide.className = 'slide';
@@ -214,7 +213,7 @@
                             const slidesElements = document.querySelectorAll('.slide');
                             startPresentation(slidesElements);
                         } else {
-                            console.error('Nenhum slide encontrado no cache.');
+                            console.error('Nenhum slide encontrado no banco de dados.');
                         }
                     });
                 });
@@ -242,21 +241,6 @@
             }, CHECK_INTERVAL);
         }
 
-        // Função para verificar e parar a apresentação se o cache não existir
-        function checkCacheStatus(playlistId) {
-            checkCache(playlistId).then(exists => {
-                if (!exists) {
-                    console.log("Cache não encontrado, parando a apresentação.");
-                    stopPresentation();
-                    loadSlides(playlistId, dispositivoId);
-                }
-            });
-        }
-
-        function stopPresentation() {
-            currentSlides.forEach(slide => slide.classList.remove('active'));
-        }
-
         document.addEventListener('DOMContentLoaded', function () {
             const urlParams = new URLSearchParams(window.location.search);
             const playlistId = urlParams.get('playlist_id');
@@ -275,8 +259,6 @@
                     }
                 });
             });
-
-            setInterval(() => checkCacheStatus(lastPlaylistId), 5000); // Verifica o cache a cada 5 segundos
         });
     </script>
 </body>

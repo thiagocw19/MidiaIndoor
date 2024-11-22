@@ -9,8 +9,20 @@
   padding: 0;
 }
 
+@keyframes backgroundAnimation {
+  0% {
+    background: rgb(2, 80, 247);
+  }
+  50% {
+    background: #004faa;
+  }
+  100% {
+    background: rgb(2, 80, 247);
+  }
+}
+
 body {
-  background: linear-gradient(rgb(2, 80, 247), #004faa, #012a68);
+  animation: backgroundAnimation 5s infinite alternate;
 }
 
 .divisor_default {
@@ -20,7 +32,7 @@ body {
 .div_btn_voltar {
   display: flex;
   align-items: center;
-  margin: 1rem;
+  margin: 2rem;
 }
 
 .btn_voltar {
@@ -30,15 +42,14 @@ body {
   background-color: #ffffff;
   color: black;
   text-decoration: none;
-  transition: .3s;
+  transition: transform 0.2s ease, background-color 0.3s; /* Transição suave para a transformação e a cor de fundo */
 }
 
 .btn_voltar:hover {
-  background-color: rgb(171, 205, 250);
-  color: #2e2d2d;
-  transition: .3s;
+  transform: scale(1.02); /* Aumenta o tamanho do botão levemente */
+  background-color: rgb(171, 205, 250); /* Cor de fundo ao passar o mouse */
+  color: #2e2d2d; /* Cor do texto ao passar o mouse */
 }
-
 /*
 .logo {
   max-width: 200px;

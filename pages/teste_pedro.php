@@ -75,6 +75,11 @@
 
         .section-cardapio {
             margin-bottom: 20px;
+            width: 100%;
+        }
+        
+        .section-cardapio h2 {
+            text-align: center;
         }
 
         .item-cardapio, .promocao-item {
@@ -153,6 +158,8 @@
         .div_geral {
             border-radius: 30px;
         }
+        
+        
 
         @keyframes l4 {
             0%     { -webkit-mask: conic-gradient(#0000 0, #000 0) }
@@ -180,7 +187,7 @@
 
         <div id="itens_cardapio">
             <div class="section-cardapio">
-                <h2 style="text-align:center">Itens do Cardápio</h2>
+                <h2>Itens do Cardápio</h2>
                
                 <div id="itens"></div>
             </div>

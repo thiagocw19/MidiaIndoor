@@ -43,18 +43,21 @@ img {
 }
 
 .playlist-select {
-    background-color: #f0f0f0;
     padding: 10px;
     border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
     width: 300px;
     display: flex;
     flex-direction: column;
 }
 
+select#playlist {
+  border-radius: 10px; /* Adjust radius as desired */
+  padding: 5px 10px; /* Optional padding */
+}
+
 .playlist-select h3 {
     margin-top: 0;
-    color: #000000;
+    color: white;
 }
 
 .playlist-select select {
@@ -98,9 +101,9 @@ img {
     background-color: #4CAF50;
     color: #fff;
     border: none;
-    border-radius: 5px;
+    border-radius: 10px;
     cursor: pointer;
-    padding: 10px 20px;
+    padding: 5px 10px;
 }
 
 .btn-add-teste button:hover {

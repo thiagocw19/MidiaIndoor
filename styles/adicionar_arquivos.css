@@ -33,7 +33,7 @@
 }
 
 .btn_cadastro {
-    border: 1px;
+    border: 1px solid transparent; /* Define a borda como sólida e transparente */
     border-radius: 10px;
     padding: .5rem 1rem;
     margin: 1rem;
@@ -144,7 +144,6 @@
     z-index: -1;
     transition: all .4s;
     background-color: #fff;
-    /* Certifique-se de definir a cor de fundo */
 }
 
 .btn:hover::after {

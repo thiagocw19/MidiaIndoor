@@ -1,5 +1,4 @@
 body {
-    
     overflow: hidden;
 }
 
@@ -12,29 +11,54 @@ body {
 }
 
 .divisor_menu {
+    display: flex; /* Alinha as divs lado a lado */
+    justify-content: space-around; /* Distribui o espaço entre as divs */
+    flex-wrap: wrap; /* Permite que as divs quebrem para a próxima linha se não houver espaço suficiente */
     text-align: center;
 }
 
 .divisor_menu h1 {
-    color: white;
+    background: linear-gradient(to right, white 70%, lime); /* Gradiente do branco para o cinza */
+    -webkit-background-clip: text; /* Aplica o gradiente ao texto */
+    -webkit-text-fill-color: transparent; /* Torna o preenchimento do texto transparente */
+    font-size: 2.5rem; /* Tamanho da fonte */
+    font-weight: bold; /* Peso da fonte */
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Sombra do texto */
+    margin-bottom: 1.5rem; /* Espaçamento inferior */
+    letter-spacing: 1px; /* Espaçamento entre letras */
+    line-height: 1.2; /* Altura da linha */
+    text-transform: uppercase; /* Transforma o texto em maiúsculas */
 }
 
-.button-container a {
+.usuariosDIV, .dispositivosDIV, .playlistsDIV, .arquivosDIV, .apDIV, .cardDIV  {
+    flex: 1; /* Faz com que cada div ocupe uma parte igual do espaço disponível */
+    min-width: 150px; /* Define uma largura mínima para as divs */
+    margin: 1rem 2rem; /* Adiciona espaço entre as divs */
+    display: flex; /* Alinha os conteúdos dentro da div */
+    flex-direction: column; /* Organiza os botões verticalmente */
+    align-items: center; /* Centraliza os botões horizontalmente */
+    box-sizing: border-box;
+}
+
+.button {
     display: block;
-    margin: 1rem 0;
+    margin: 1rem 0; /* Espaço entre os botões */
     text-decoration: none;
-    padding: 1rem;
+    padding: 0.5rem;
     background-color: rgb(3, 177, 3);
     color: white;
     font-size: 1.2rem;
     border: none;
     border-radius: 10px;
-    transition: .3s;
+    transition: transform 0.2s ease, background-color 0.3s, color 0.3s; /* Transição suave para transformação, cor de fundo e cor do texto */
+    width: 100%; /* Faz com que o botão ocupe toda a largura da div pai */
+    box-sizing: border-box; /* Inclui padding e bordas na largura total */
 }
 
-.button-container a:hover {
+.button:hover {
     background-color: green;
     color: black;
+    transform: scale(1.05); /* Aumenta o tamanho do botão levemente */
 }
 
 .logoff {
@@ -50,17 +74,3 @@ body {
     background-color: rgb(171, 2, 2);
     transition: .3s;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
